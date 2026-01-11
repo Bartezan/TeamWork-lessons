@@ -1,10 +1,8 @@
 package com.skypro.lessons.controllers;
 
+import com.skypro.lessons.models.ResponsRecommendationDTO;
 import com.skypro.lessons.services.RecommendationsService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -18,9 +16,10 @@ public class RecommendationController {
         this.recommendationsService = recommendationsService;
     }
 
-    @GetMapping
-    public int getRecommendationToUser (@RequestParam UUID user){
-        return recommendationsService.getRecommendationToUser(user);
+    @GetMapping("/{userId}")
+    public ResponsRecommendationDTO getRecommendationToUser(@PathVariable UUID userId) {
+        ResponsRecommendationDTO result = new ResponsRecommendationDTO(userId, recommendationsService.getRecommendationToUser(userId));
+        return result;
     }
 
 }

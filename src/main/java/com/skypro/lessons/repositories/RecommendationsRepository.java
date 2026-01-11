@@ -14,11 +14,16 @@ public class RecommendationsRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public int getRandomTransactionAmount(UUID user){
-        Integer result = jdbcTemplate.queryForObject(
-                "SELECT amount FROM transactions t WHERE t.user_id = ? LIMIT 1",
-                Integer.class,
-                user);
-        return result != null ? result : 0;
+    public int getIntFromCustomRequest(String request) {
+        int result;
+        try {
+            result = jdbcTemplate.queryForObject(
+                    request,
+                    Integer.class
+            );
+            return result;
+        } catch (NullPointerException e) {
+            return result = 0;
+        }
     }
 }
