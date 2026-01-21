@@ -1,5 +1,7 @@
 package com.skypro.lessons.interfaces.impl;
 
+import com.skypro.lessons.entity.ProductType;
+import com.skypro.lessons.entity.TransactionType;
 import com.skypro.lessons.interfaces.RecommendationRuleSet;
 import com.skypro.lessons.models.RecomendationDto;
 import com.skypro.lessons.repositories.RecommendationsRepository;
@@ -16,36 +18,15 @@ public class ImplSavingRecommendation implements RecommendationRuleSet {
 
     @Override
     public Optional<RecomendationDto> getRecommendation(UUID user) {
-        int countDebit = repository.getIntFromCustomRequest("""
-                SELECT COUNT(*)
-                FROM TRANSACTIONS AS t
-                JOIN USERS u ON t.USER_ID =u.ID
-                JOIN PRODUCTS p ON t.PRODUCT_ID =p.ID""" +
-                " WHERE t.USER_ID ='" + user + "' AND p.TYPE = 'DEBIT'");
+        boolean hasDebit = repository.hasProduct(user, ProductType.DEBIT.name());
 
-        int sumDebitDeposit = repository.getIntFromCustomRequest("""
-                SELECT  SUM(t.AMOUNT)
-                FROM TRANSACTIONS AS t
-                JOIN USERS u ON t.USER_ID =u.ID
-                JOIN PRODUCTS p ON t.PRODUCT_ID =p.ID""" +
-                " WHERE t.USER_ID ='" + user + "' AND p.TYPE = 'DEBIT' AND t.TYPE = 'DEPOSIT'");
+        int sumDebitDeposit = repository.getSumByProdTypeAndTransactionsType(user, ProductType.DEBIT.name(), TransactionType.DEPOSIT.name());
 
-        int sumSavingDeposit = repository.getIntFromCustomRequest("""
-                SELECT  SUM(t.AMOUNT)
-                FROM TRANSACTIONS AS t
-                JOIN USERS u ON t.USER_ID =u.ID
-                JOIN PRODUCTS p ON t.PRODUCT_ID =p.ID
-                WHERE t.USER_ID ='""" + user + "' AND p.TYPE = 'SAVING' AND t.TYPE = 'DEPOSIT'");
+        int sumSavingDeposit = repository.getSumByProdTypeAndTransactionsType(user, ProductType.SAVING.name(), TransactionType.DEPOSIT.name());
 
-        int sumDebitWithdraw = repository.getIntFromCustomRequest("""
-                SELECT  SUM(t.AMOUNT)
-                FROM TRANSACTIONS AS t
-                JOIN USERS u ON t.USER_ID =u.ID
-                JOIN PRODUCTS p ON t.PRODUCT_ID =p.ID
-                WHERE t.USER_ID ='""" + user + "' AND p.TYPE = 'DEBIT' AND t.TYPE = 'WITHDRAW'");
+        int sumDebitWithdraw = repository.getSumByProdTypeAndTransactionsType(user, ProductType.DEBIT.name(), TransactionType.WITHDRAW.name());
 
-        if (countDebit >= 1 && (sumDebitDeposit >= 50000 || sumSavingDeposit >= 50000) && sumDebitDeposit > sumDebitWithdraw) {
-            System.out.println("Saving true");
+        if (hasDebit && (sumDebitDeposit >= 50000 || sumSavingDeposit >= 50000) && sumDebitDeposit > sumDebitWithdraw) {
             RecomendationDto investRecommendation = new RecomendationDto("Top Saving", UUID.fromString("59efc529-2fff-41af-baff-90ccd7402925"), """
                     Откройте свою собственную «Копилку» с нашим банком!
                     «Копилка» — это уникальный банковский инструмент, который поможет вам легко и удобно накапливать деньги на важные цели. Больше никаких забытых чеков и потерянных квитанций — всё под контролем!
@@ -57,7 +38,6 @@ public class ImplSavingRecommendation implements RecommendationRuleSet {
                     """);
             return Optional.of(investRecommendation);
         }
-        System.out.println("Saving false");
         return Optional.empty();
     }
 }

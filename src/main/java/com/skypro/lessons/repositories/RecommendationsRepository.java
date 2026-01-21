@@ -26,4 +26,34 @@ public class RecommendationsRepository {
             return result = 0;
         }
     }
+
+    public int getSumByProdTypeAndTransactionsType(UUID userId, String prodType, String transType) {
+        return jdbcTemplate.queryForObject("""
+                        SELECT COALESCE(SUM(t.AMOUNT),0)
+                        FROM TRANSACTIONS AS t
+                        JOIN USERS u ON t.USER_ID =u.ID
+                        JOIN PRODUCTS p ON t.PRODUCT_ID =p.ID
+                        WHERE t.USER_ID =? AND p.TYPE = ? AND t.TYPE = ?
+                        """,
+                Integer.class,
+                userId.toString(),
+                prodType,
+                transType);
+    }
+
+    public boolean hasProduct(UUID userId, String prodType) {
+        int requestResult = jdbcTemplate.queryForObject("""
+                        SELECT COALESCE(COUNT(*),0)
+                        FROM TRANSACTIONS AS t
+                        JOIN USERS u ON t.USER_ID =u.ID
+                        JOIN PRODUCTS p ON t.PRODUCT_ID =p.ID
+                        WHERE t.USER_ID =? AND p.TYPE = ?
+                        """,
+                Integer.class,
+                userId.toString(),
+                prodType);
+        if (requestResult > 0) return Boolean.TRUE;
+        else return Boolean.FALSE;
+    }
+
 }
